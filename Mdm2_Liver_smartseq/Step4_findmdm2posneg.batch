@@ -1,0 +1,7 @@
+# mdm2exon5_6.bed are extracted from mm10 gtf file that consist of the coordinates of exon 5 and 6 of Mdm2. It is absent in Mdm2- cells (primary senescence) and present in Mdm2+ cells (secondary senescence)
+# 39passed_61b.txt is a list of cells that passed QC that are in the induced experiment
+cat  39passed_61b.txt |while read a
+do
+	c=$( samtools view -b -F4  ${a}_sorted.bam|bedtools intersect -abam stdin -b mdm2exon5_6.bed -bed|cut -f4|cut -d "/" -f1|sort -u|wc -l); echo -e ${a}"\t"${c} \
+	>> mdm2Exon56mapped.lst
+done

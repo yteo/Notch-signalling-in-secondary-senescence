@@ -1,0 +1,50 @@
+module load samtools/1.2
+module load bcftools/1.2
+
+ # identify ras mutation
+# mutation is in chr 11 location 534288
+
+for file in *_sorted.bam
+do
+	FILE=$(echo ${file%_sorted.bam})
+	samtools mpileup --output-tags DP,DV,DP4,SP -uf /DATA/hg19_scRNA.fa ${FILE}_sorted.bam \
+	|bcftools call -c  |grep "chr11"|grep -w "534288" > /data/VCF_output/${list}.vcf
+
+done
+# cd to the folder containing *.vcf
+for file in *.vcf
+do
+# total quality reads mapping with that SNP.
+#Number of high-quality non-reference bases
+a=$(awk '$4 == "C" && $5 == "A" {print $0}' $file|cut -f 10|cut -d ":" -f4,6|cut -d ":" -f1)
+# total DP4 values separated by comma = total quality reads mapping that position
+#DP4	Number of high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases
+b=$(awk '$4 == "C" && $5 == "A" {print $0}' $file|cut -f 10|cut -d ":" -f4,6|cut -d ":" -f2|sed -e 's/,/\n/g' | awk 'BEGIN {total=0} {total += $1} END {print total}')
+
+echo -e ${file%.vcf}"\t"$a"\t"$b >> ../SNP_percent.txt
+done
+
+
+
+
+# identify neomycin expression
+module load samtools
+module load hisat2
+RUNTIME="$(date +%s)"
+
+
+# map to hg19 + neo gene using hisat2
+# get read count that maps to neo
+
+for sample in *_1.fq.gz
+do 
+file=$(echo ${sample%_1.fq.gz})
+file1="${file}"_1.fq.gz
+file2="${file}"_2.fq.gz
+hisat2 -q -x /data/hg19_scRNA_neo \
+-1 $file1 -2 $file2 -S ${file}.sam -p 20 --dta-cufflinks
+samtools view -bS ${file}.sam| samtools sort -n - -o ${file}_sorted
+
+
+neocount=$(samtools view -F4 ${file}_sorted|grep "pLNCX2-ER-ras_neo"|cut -f1|sort -u|wc -l)
+echo -e $file"\t"$neocount >> neomycincount.txt

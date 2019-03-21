@@ -1,0 +1,12 @@
+# used cellranger 2.0.1
+
+#IMR90_sen_growing_libraries.csv looks like this
+
+#library_id,molecule_h5
+#IMR90Senrep1_2.0.1,/data/IMR90_Senrep1_merged_2_0_1/outs/molecule_info.h5
+#IMR90Growingrep1_2.0.1,/data/IMR90_growingrep1_merged_2_0_1/outs/molecule_info.h5
+#IMR90Growingrep2_2.0.1,/data/IMR90_growingrep2_merged_2_0_1/outs/molecule_info.h5
+
+
+cellranger aggr --id=IMR90_sen_growing_libraries_2_0_1 \
+--csv=IMR90_sen_growing_libraries.csv

@@ -1,0 +1,30 @@
+
+module load picard-tools/1.88
+module load samtools
+
+
+
+cat 50000_mappedreads.txt|while read list
+do 
+	file=${list}_sorted.bam
+	samtools view -h -f2 -F256 $file |awk '$3 !~ /^ERCC/'| samtools view -Sb > ${file%.bam}_tmp.bam
+	java -jar /gpfs/runtime/opt/picard-tools/1.88/picard-tools-1.88/SortSam.jar I=${file%.bam}_tmp.bam O=${file%_sorted.bam}_tmp_sorted.bam SORT_ORDER=queryname
+	samtools view ${file%.bam}_tmp.bam|cut -f1 |sort -u|shuf|head -n 50000  > {file%.bam}_tmp.txt
+	java -jar /gpfs/runtime/opt/picard-tools/1.88/picard-tools-1.88/FilterSamReads.jar \
+	INPUT=${file%_sorted.bam}_tmp_sorted.bam FILTER=includeReadList READ_LIST_FILE={file%.bam}_tmp.txt OUTPUT=${file%_sorted.bam}_downsampled.bam
+	samtools sort -n ${file%_sorted.bam}_downsampled.bam \
+	-o ${file%_sorted.bam}_downsampled50000_sorted.bam
+	rm ${file%.bam}_tmp.bam
+	rm ${file%_sorted.bam}_downsampled.reads
+	rm {file%.bam}_tmp.txt
+	rm ${file%_sorted.bam}_tmp_sorted.bam
+	rm ${file%_sorted.bam}_tmp_sorted.reads
+	rm ${file%_sorted.bam}_downsampled.bam
+	python htseq-count -f bam --stranded=no \
+	${file%_sorted.bam}_downsampled50000_sorted.bam -r name \
+	/data/Mus_musculus.GRCm38.85_editedchr_ERCC.gtf > ${file%_sorted.bam}_downsampled50000_htseq.txt
+	file1=$(echo $file|cut -d "/" -f7)
+	sed  "s/^/${file1%_sorted.bam}\t/" ${file%_sorted.bam}_downsampled50000_htseq.txt |grep -v "__">> Compiled_downsampled50000_chr.txt
+
+done
+

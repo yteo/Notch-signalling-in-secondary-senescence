@@ -1,0 +1,42 @@
+#############################################
+OUTPUTDIR="HTSEQ_downsampled"
+# Downsampling using picardtools
+module load picard-tools/1.88
+module load samtools
+cat passedmappedreads.csv|while read list
+do 
+	file=${list}_sorted.bam
+	samtools view -h -f2 -F256 $file |awk '$3 !~ /^ERCC/'| samtools view -Sb > ${file%.bam}_tmp.bam
+	java -jar /gpfs/runtime/opt/picard-tools/1.88/picard-tools-1.88/SortSam.jar I=${file%.bam}_tmp.bam O=${file%_sorted.bam}_tmp_sorted.bam SORT_ORDER=queryname
+	samtools view ${file%.bam}_tmp.bam|cut -f1 |sort -u|shuf|head -n 200000  > tmp
+	java -jar /gpfs/runtime/opt/picard-tools/1.88/picard-tools-1.88/FilterSamReads.jar \
+	INPUT=${file%_sorted.bam}_tmp_sorted.bam FILTER=includeReadList READ_LIST_FILE=tmp OUTPUT=${file%_sorted.bam}_downsampled.bam
+	samtools sort -n ${file%_sorted.bam}_downsampled.bam \
+	-o ${file%_sorted.bam}_downsampled_sorted.bam
+	rm ${file%.bam}_tmp.bam
+	rm ${file%_sorted.bam}_downsampled.reads
+	rm tmp
+	rm ${file%_sorted.bam}_tmp_sorted.bam
+	rm ${file%_sorted.bam}_tmp_sorted.reads
+	rm ${file%_sorted.bam}_downsampled.bam
+done
+
+# final file is with this extension:  *_downsampled_sorted.bam 
+
+###############################################
+# Do HTSeq-Count on downsampled_sorted.bam files
+for FILE in *_downsampled_sorted.bam
+do
+		python htseq-count -f bam --stranded=no \
+		$FILE -r name \
+		/data/hg19_ERCC.annotation.gtf > $OUTPUTDIR/${FILE%_sorted.bam}_htseq.txt
+
+done
+
+###############################################
+# Compiling htseq count txt files
+cd $OUTPUTDIR
+for file in *_htseq.txt
+do 
+	sed  "s/^/$file\t/" "$file" |grep -v "^__">> Compiled_downsampled-chr.txt
+done

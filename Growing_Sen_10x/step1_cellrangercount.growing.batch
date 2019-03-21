@@ -1,0 +1,24 @@
+# used cellranger 2.0.1
+# growing 1
+cellranger count --id=IMR90_growingrep1_merged_2_0_1 \
+--transcriptome=/data/hg19_neo_gfp_puro \
+--fastqs=/data/Growing_rep1_merged/ \
+--sample=22700_ACGTCCCT,22700_CGCATGTG,22700_GAAGGAAC,22700_TTTCATGA \
+--localmem=80 \
+--localcores=20
+
+#growing2
+cellranger count --id=IMR90_growingrep2_merged_2_0_1 \
+--transcriptome=/data/hg19_neo_gfp_puro \
+--fastqs=/data/Growing_rep2_merged/ \
+--sample=22704_AGTAGTCT,22704_CAGTACTG,22704_GCAGTAGA,22704_TTCCCGAC \
+--localmem=80 \
+--localcores=20
+
+# senescence 1
+cellranger count --id=IMR90_Senrep1_merged_2_0_1 \
+--transcriptome=/data/hg19_neo_gfp_puro \
+--fastqs=/data/Senescent_rep1_merged/ \
+--sample=22700_TATGATTC,22700_GGATGCCG,22700_CCCACAGT,22700_ATGCTGAA \
+--localmem=80 \
+--localcores=20
