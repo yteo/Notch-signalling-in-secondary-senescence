@@ -36,7 +36,7 @@ write.table(FC_sig,file="Paracrine_ControlGrowing.txt",sep="\t")
 
 # OIS vs paracrine
 
-library(limma)
+
 dat<-read.table("OIS_paracrine_RMA.txt",header=T,row.names=1)
 design <- cbind(OIS=1,Paracrine=c(0,0,0,1,1,1))
 fit<-lmFit(dat,design)
@@ -47,10 +47,8 @@ colnames(fit)
 rownames(fit)[1:10]
 names(fit)
 
-convert<-read.table("OIS_paracrine_geneID2.txt")
-FC2<-merge(FC,convert,by.x="row.names",by.y="V2")
-library(annotate)
-library(hugene10sttranscriptcluster.db)
+
+
 annodb <- "hugene10sttranscriptcluster.db"
 ID     <- rownames(FC)
 Symbol <- as.character(lookUp(ID, annodb, "SYMBOL"))
